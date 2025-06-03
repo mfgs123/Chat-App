@@ -1,5 +1,5 @@
 
-//creating websocket for client side / browser
+//creating websocket for client side / browser cool
 const socket = new WebSocket('ws://localhost:3001')
 
 function sendMessage(e) {
