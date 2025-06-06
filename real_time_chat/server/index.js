@@ -43,15 +43,33 @@ const io = new Server(expressServer, {
 })
 
 
-//socket.io has a connection that emits every message to everyone connected
+//establishing connection
 io.on('connection', socket => {
     console.log(`User ${socket.id} connected`) //displaying message of which specific user connected - each user gets unique id
 
+    //upon connection - message only to user that just connected
+    socket.emit('message', "Welcome to Chat App! :) ") //socket.emit goes directly to user
+
+    //Upon connection - to all others but not user that just connected
+    //socket.broadcast.emit goes to ALL rest of users
+    socket.broadcast.emit('message', `User ${socket.id.substring(0,5)} connected`)
+
+    //Listening for message event, users receive messages that other users sent
     socket.on('message', data => { 
         console.log(data) //displaying data
         io.emit('message', `${socket.id.substring(0,5)}: ${data}`) //io.emit will emit this message to everyone that is currently connected
                                                                     //${socket.id.substring(0,5)} will display who sent the message using the unique user if but only displaying first 5 characters
 
+    })
+
+    //When user disconnects, this will be sent to all tohers
+    socket.on('disconnect', () => {
+        socket.broadcast.emit('message', `User ${socket.id.substring(0,5)} disconnected`)
+    })
+
+    //Listen for activity - displaying message when a user is currently typing
+    socket.on('activity', (name) => {
+        socket.broadcast.emit('activity', name)
     })
 })
 
