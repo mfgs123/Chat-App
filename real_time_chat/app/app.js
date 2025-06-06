@@ -1,6 +1,6 @@
 
 //no long using websocket, using socket.io instead
-const socket = new io('ws://localhost:3001')
+const socket = new io('ws://localhost:3500')
 
 function sendMessage(e) {
     e.preventDefault()
