@@ -3,8 +3,6 @@
 const socket = new io('ws://localhost:3500')
 
 //adding query selectors 
-
-
 //msgInput uses a selector that only select one single selector - the form one for the message - that was the only one before
 //however, now we have 2 addtiional inputs for name id and chat room number
 const msgInput = document.querySelector('#message') //points to message entered by user, msgInput is also used in sendMessage(e) function
@@ -15,7 +13,7 @@ const chatRoom = document.querySelector("#room")
 const activity = document.querySelector('.activity')
 
 //adding more query selectors for classes user-list and room-list that we set up as paragraph elements in html form
-const userList = document.querySelector('.user-list')
+const usersList = document.querySelector('.user-list')
 const roomList = document.querySelector('.room-list')
 const chatDisplay = document.querySelector('.chat-display')
 
@@ -71,9 +69,38 @@ msgInput.addEventListener('keypress', () => {
 //No longer using websockets, instead of addEvenetListener, we are using 'on' - when server receives message, on() calls specified function
 socket.on("message", (data) => {
     activity.textContent = ""
+    //deconstructing data that comes through server into name, text and time
+    const {name, text, time} = data
     const li = document.createElement('li') //creating list element that will contain message from server
-    li.textContent = data //making list contain that message
-    document.querySelector('ul').appendChild(li) //grabbing unorders list from original html code and appedning new message to it
+    li.className = 'post' //making list item contain class 'post'
+    if(name === nameInput.value) // if its the current user
+    {
+        li.className = 'post post--left' //changing li class name --> using block element modifier naming convention - makes code reusable and better organised and understandable
+    }
+    if (name !== nameInput.value && name !== 'Admin') //if user's name not equal to current user OR the admin user
+    {
+        li.className = 'post post--right' //changing to appropiate name using BEM - shows up in right side
+    }
+    if (name !== 'Admin')
+    {
+        //if current user is the user using it (NOT ADMIN) - div class is given 'post__header--user', if its not current user its given the class name after colon
+        //first div has the user name and time they sent message
+        //second div show the actual text
+        li.innerHTML = `<div class="post__header ${name === nameInput.value ? 'post__header--user' : 'post__header--reply'}">
+         <span class="post__header--name">${name}</span> 
+         <span class="post__header--time">${time}</span>
+         </div>
+         <div class="post__text">${text}</div>`
+    } 
+    //if admin is the one sending message - setting it as a much smaller template literal - doesnt need user name or time
+    else {
+        li.innerHTML = `<div class="post__text">${text}</div>`
+    }
+    document.querySelector('.chat-display').appendChild(li) //grabbing unorders list from original html code and appedning new message to it
+
+    //setting the number of pixels chatDisplay is scrolled vertically (how much its scrolled up) to its actual height
+    //allows chat display to continue to scroll down and show recent messages
+    chatDisplay.scrollTop = chatDisplay.scrollHeight
 })
 
 
@@ -91,3 +118,62 @@ socket.on("activity", (name) => {
         activity.textContent = "" //text is typing... gets resetted to empty string if user deletes message 
     },3000)
 })
+
+//setting up listened for showUsers and showRooms events
+socket.on('userList', ({ users }) => {
+    //calling usersList() function when users list object is emitted in index.js
+    showUsers(users)
+})
+
+socket.on('roomList', ({ rooms }) => {
+    //calling showRooms() function when room list object is emitted in index.js
+    showRooms(rooms)
+})
+
+//updating rooms list and users list
+function showUsers(users){
+    //firstly setting usersList (paragraph element in HTML file) to an empty string - resetting it
+    usersList.textContent = ''
+    //if we have users value
+    if (users){
+        //<em></em> used to emphasize texts - making it italics
+        usersList.innerHTML = `<em>Users in ${chatRoom.value}:</em>`
+
+        //going through users list and printing out user's names
+        users.forEach((user, i) => {
+          //adding the active user's names to usersList
+            usersList.textContent += ` ${user.name}`
+            //to add a seperator coma after each name EXCEPT last one:
+            //i representes the iterator - position ion list
+            //as long as index/position is not the last element in list (users.length - 1)
+            if (users.length > 1 && i !== users.length - 1)
+            {
+                usersList.textContent += ","
+            }
+        })
+    }
+}
+
+//updating rooms list 
+function showRooms(rooms){
+    //firstly setting roomList (paragraph element in HTML file) to an empty string - resetting it
+    roomList.textContent = ''
+    //if we have rooms list value
+    if (rooms){
+        //<em></em> used to emphasize texts - making it italics
+        roomList.innerHTML = '<em>Activate Rooms:</em>'
+
+        //going through rooms list and printing out rooms names
+        rooms.forEach((room, i) => {
+          //adding the active user's names to usersList
+            roomList.textContent += ` ${room}`
+            //to add a seperator coma after each name EXCEPT last one:
+            //i representes the iterator - position ion list
+            //as long as index/position is not the last element in list (users.length - 1)
+            if (rooms.length > 1 && i !== rooms.length - 1)
+            {
+                roomList.textContent += ","
+            }
+        })
+    }
+}
