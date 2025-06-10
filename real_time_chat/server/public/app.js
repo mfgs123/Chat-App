@@ -1,6 +1,6 @@
 
 //no long using websocket, using socket.io instead
-const socket = new io('ws://localhost:3500')
+const socket = new io('https://chatroom-app-9avq.onrender.com')
 
 //adding query selectors 
 //msgInput uses a selector that only select one single selector - the form one for the message - that was the only one before
